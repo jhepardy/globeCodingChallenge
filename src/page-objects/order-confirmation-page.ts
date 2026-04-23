@@ -1,0 +1,11 @@
+import { expect, type Page } from '@playwright/test';
+
+export class OrderConfirmationPage {
+  constructor(private readonly page: Page) {}
+
+  async expectSuccess(): Promise<void> {
+    await this.page.waitForLoadState('networkidle');
+    await expect(this.page.getByText(/thank you|order confirmed|success/i).first()).toBeVisible({ timeout: 30000 });
+    await expect(this.page.getByText(/order\s*#|order number/i)).toBeVisible();
+  }
+}
