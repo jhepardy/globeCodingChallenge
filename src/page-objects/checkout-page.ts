@@ -123,7 +123,9 @@ export class CheckoutPage {
 
   async fillPaymentDetailsFromHints(): Promise<void> {
     // The demo explicitly shows the Stripe test card details; use those values in the iframe fields.
-    await expect(this.page.getById('payment-numberInput')).toBeVisible({ timeout: 20000 });
+    await expect(this.page.getByText(/test card:\s*4242/i)).toBeVisible({ timeout: 20000 });
+    await expect(this.page.getByText(/loading payment form/i)).not.toBeVisible({ timeout: 30000 });
+    await expect(this.page.locator('iframe[src*="componentName=payment"]').first()).toBeVisible({ timeout: 30000 });
 
     const cardFrame = this.paymentFrame();
     const cardNumber = cardFrame.locator('input[name="number"], #payment-numberInput').first();
