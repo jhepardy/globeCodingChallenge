@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 const runId = new Date().toISOString().replace(/[:.]/g, '-');
 const runOutputDir = `test-results/${runId}`;
+const isCI = !!process.env.CI;
 
 // Central Playwright configuration shared by local runs and CI.
 export default defineConfig({
@@ -20,10 +21,10 @@ export default defineConfig({
   use: {
     // The demo store redirects to a locale-specific path from this root URL.
     baseURL: 'https://demo.spreecommerce.org',
-    // Run headed with a visible interaction delay so each step is easy to follow.
-    headless: false,
+    // Run headed locally, but stay headless in CI where no display server is available.
+    headless: isCI,
     launchOptions: {
-      slowMo: 400
+      slowMo: isCI ? 0 : 400
     },
     trace: 'on-first-retry',
     // Keep a video for every run and screenshots only when a test fails.
