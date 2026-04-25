@@ -27,9 +27,9 @@ export default defineConfig({
     launchOptions: {
       slowMo: isCI ? 0 : 400
     },
-    trace: 'on-first-retry',
-    // Keep a video for every run and screenshots only when a test fails.
-    video: 'on',
+    trace: 'retain-on-failure',
+    // Keep richer artifacts only when a test fails so local runs stay readable.
+    video: 'retain-on-failure',
     screenshot: 'only-on-failure',
     testIdAttribute: 'data-testid'
   },

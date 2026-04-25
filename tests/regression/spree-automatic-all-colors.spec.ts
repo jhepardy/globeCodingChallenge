@@ -1,10 +1,10 @@
-import { test } from '@playwright/test';
+import { test } from '../fixtures/base-test';
 import { multiItemCheckoutSelections } from '../../src/data/checkout-selections';
 import { runSpreeFullCatalogCheckoutFlow } from '../flows/spree-full-catalog-checkout-flow';
 
 test.describe('Spree Commerce regression checkout', () => {
-  test('adds Automatic Espresso Machine in all available colors and completes checkout', async ({ page }) => {
+  test('adds Automatic Espresso Machine in all available colors and completes checkout', async ({ page, setRunContext }) => {
     test.setTimeout(300000);
-    await runSpreeFullCatalogCheckoutFlow(page, test.step, multiItemCheckoutSelections.automaticAllColors);
+    await runSpreeFullCatalogCheckoutFlow(page, test.step, multiItemCheckoutSelections.automaticAllColors, setRunContext);
   });
 });

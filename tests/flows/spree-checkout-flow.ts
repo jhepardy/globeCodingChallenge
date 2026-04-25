@@ -17,11 +17,14 @@ type TestStep = TestType<{
   page: Page;
 }>['step'];
 
+type RunContextSetter = (context: Record<string, unknown>) => void;
+
 export async function runSpreeCheckoutFlow(
   page: Page,
   step: TestStep,
   shippingMethod: ShippingMethod,
-  selection: CheckoutSelection
+  selection: CheckoutSelection,
+  setRunContext?: RunContextSetter
 ): Promise<void> {
   const customer = createCustomer(shippingMethod);
   const homePage = new HomePage(page);
@@ -30,6 +33,13 @@ export async function runSpreeCheckoutFlow(
   const cartPage = new CartPage(page);
   const checkoutPage = new CheckoutPage(page);
   const confirmationPage = new OrderConfirmationPage(page);
+
+  setRunContext?.({
+    suite: 'smoke',
+    shippingMethod,
+    selection,
+    customer
+  });
 
   await step('Navigate to the Spree Commerce demo store', async () => {
     await homePage.goto();
