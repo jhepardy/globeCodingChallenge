@@ -11,10 +11,10 @@ export class HomePage {
   }
 
   async goto(): Promise<void> {
-    await this.page.goto('/');
+    // Go directly to the intended storefront market to avoid geo-detection redirects.
+    await this.page.goto('/us/en');
     await this.page.waitForLoadState('networkidle');
-    // The storefront redirects to a country/locale path such as /us/en.
-    await expect(this.page).toHaveURL(/\/[a-z]{2}\/en(?:\/)?$/);
+    await expect(this.page).toHaveURL(/\/us\/en(?:\/)?$/);
     await expect(this.accountLink).toBeVisible();
   }
 
@@ -26,7 +26,8 @@ export class HomePage {
     // Use the full catalog first so the product link comes from a stable listing instead of a carousel.
     await this.page.getByRole('link', { name: /view all/i }).click();
     await expect(this.page).toHaveURL(/\/products$/);
-    await this.page.getByRole('link', { name: new RegExp(productName, 'i') }).first().click();
-    await expect(this.page).toHaveURL(/\/products\//);
+
+    const productLink = this.page.getByRole('link', { name: new RegExp(productName, 'i') }).first();
+    await Promise.all([this.page.waitForURL(/\/products\//), productLink.click()]);
   }
 }

@@ -25,7 +25,5 @@ jobs:
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: playwright-report
-          path: |
-            playwright-report
-            test-results
+          name: playwright-results
+          path: test-results

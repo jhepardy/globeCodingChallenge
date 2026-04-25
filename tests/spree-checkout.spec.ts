@@ -35,14 +35,8 @@ test.describe('Spree Commerce demo checkout', () => {
     });
 
     await test.step('Log out if needed and log back in with the new user', async () => {
-      // Clear browser state to force a clean login without depending on a fragile logout widget.
-      await page.context().clearCookies();
-      await page.goto('/us/en');
-      await page.evaluate(() => {
-        window.localStorage.clear();
-        window.sessionStorage.clear();
-      });
-      await page.goto('/us/en/account');
+      // Prefer a real sign-out so the flow matches the challenge requirement, with a safe fallback.
+      await accountPage.ensureSignedOut();
       await accountPage.expectLoginPage();
       await accountPage.login(customer.email, customer.password);
       await expect(page).toHaveURL(/\/account$/);

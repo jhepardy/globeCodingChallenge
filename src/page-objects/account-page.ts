@@ -50,6 +50,25 @@ export class AccountPage {
     }
   }
 
+  async ensureSignedOut(): Promise<void> {
+    await this.signOutIfVisible();
+    await this.page.goto('/us/en/account');
+
+    const signInButton = this.page.getByRole('button', { name: /sign in/i });
+    if (await signInButton.isVisible().catch(() => false)) {
+      return;
+    }
+
+    // Fall back to clearing session state when the storefront keeps the account session active.
+    await this.page.context().clearCookies();
+    await this.page.goto('/us/en');
+    await this.page.evaluate(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+    });
+    await this.page.goto('/us/en/account');
+  }
+
   async login(email: string, password: string): Promise<void> {
     // Reuse the same credentials to prove the new account can authenticate again.
     await this.page.getByLabel(/^email$/i).fill(email);

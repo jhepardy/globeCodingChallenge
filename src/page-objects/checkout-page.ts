@@ -16,6 +16,12 @@ export class CheckoutPage {
     return this.page.frameLocator('iframe[src*="componentName=payment"]').first();
   }
 
+  private shippingOptionLabels(): Locator {
+    return this.shippingMethodSection().locator('label, [role="radio"]').filter({
+      hasText: /\$\d+\.\d{2}|free/i
+    });
+  }
+
   async addShippingAddress(customer: Customer): Promise<void> {
     // The checkout page is label/placeholder-driven rather than route-step driven.
     await expect(this.page.getByRole('heading', { name: /contact information/i })).toBeVisible({ timeout: 20000 });
@@ -93,6 +99,22 @@ export class CheckoutPage {
         }
       )
       .toMatch(/^available:/);
+
+    const shippingOptions = this.shippingOptionLabels();
+    await expect(shippingOptions.first()).toBeVisible({ timeout: 15000 });
+
+    const optionCount = await shippingOptions.count();
+    expect(optionCount).toBeGreaterThan(0);
+
+    const optionTexts = (await shippingOptions.allInnerTexts())
+      .map((text) => text.replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+
+    expect(optionTexts.length).toBeGreaterThan(0);
+
+    for (const optionText of optionTexts) {
+      expect(optionText).toMatch(/\$\d+\.\d{2}|free/i);
+    }
   }
 
   async selectShippingMethod(): Promise<void> {
@@ -145,6 +167,8 @@ export class CheckoutPage {
 
   async placeOrder(): Promise<void> {
     // The live DOM shows a direct Pay Now CTA without an extra policy checkbox in this checkout variant.
-    await this.page.getByRole('button', { name: /place order|complete order|pay now/i }).click();
+    const submitOrderButton = this.page.getByRole('button', { name: /place order|complete order|pay now/i });
+    await expect(submitOrderButton).toBeEnabled({ timeout: 20000 });
+    await submitOrderButton.click();
   }
 }
