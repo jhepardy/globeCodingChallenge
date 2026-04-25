@@ -27,7 +27,15 @@ export class HomePage {
     await this.page.getByRole('link', { name: /view all/i }).click();
     await expect(this.page).toHaveURL(/\/products$/);
 
-    const productLink = this.page.getByRole('link', { name: new RegExp(productName, 'i') }).first();
-    await Promise.all([this.page.waitForURL(/\/products\//), productLink.click()]);
+    const productHeading = this.page.getByRole('heading', { name: new RegExp(`^${productName}$`, 'i') }).first();
+    await expect(productHeading).toBeVisible();
+    await productHeading.click();
+
+    await expect
+      .poll(async () => this.page.url(), {
+        timeout: 15000,
+        message: `Expected ${productName} to open its product detail page from the catalog listing.`
+      })
+      .toMatch(/\/products\//);
   }
 }

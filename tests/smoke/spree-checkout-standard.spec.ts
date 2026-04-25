@@ -1,0 +1,10 @@
+import { test } from '@playwright/test';
+import { checkoutSelections } from '../../src/data/checkout-selections';
+import { runSpreeCheckoutFlow } from '../flows/spree-checkout-flow';
+
+test.describe('Spree Commerce smoke checkout', () => {
+  test('registers, logs in, purchases a product, and confirms the order with Standard shipping', async ({ page }) => {
+    test.setTimeout(120000);
+    await runSpreeCheckoutFlow(page, test.step, 'Standard', checkoutSelections.automaticStandard);
+  });
+});

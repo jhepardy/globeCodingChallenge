@@ -1,5 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
-import type { Customer } from '../test-data/customer';
+import type { Customer } from '../data/customer';
 
 export class CheckoutPage {
   constructor(private readonly page: Page) {}
@@ -20,6 +20,10 @@ export class CheckoutPage {
     return this.shippingMethodSection().locator('label, [role="radio"]').filter({
       hasText: /\$\d+\.\d{2}|free/i
     });
+  }
+
+  private shippingMethodRadio(methodName: string): Locator {
+    return this.shippingMethodSection().getByRole('radio', { name: new RegExp(methodName, 'i') }).first();
   }
 
   async addShippingAddress(customer: Customer): Promise<void> {
@@ -115,14 +119,16 @@ export class CheckoutPage {
     for (const optionText of optionTexts) {
       expect(optionText).toMatch(/\$\d+\.\d{2}|free/i);
     }
+
+    await expect(shippingOptions.filter({ hasText: /standard/i }).first()).toBeVisible();
+    await expect(shippingOptions.filter({ hasText: /premium/i }).first()).toBeVisible();
   }
 
-  async selectShippingMethod(): Promise<void> {
-    // Once shipping methods exist, pick the first valid option to continue the happy path.
-    const shippingMethods = this.shippingMethodSection().getByRole('radio');
-    const count = await shippingMethods.count();
-    expect(count).toBeGreaterThan(0);
-    await shippingMethods.first().check();
+  async selectShippingMethod(methodName: 'Standard' | 'Premium'): Promise<void> {
+    const shippingMethod = this.shippingMethodRadio(methodName);
+    await expect(shippingMethod).toBeVisible({ timeout: 15000 });
+    await shippingMethod.click();
+    await expect(shippingMethod).toHaveAttribute('aria-checked', 'true');
   }
 
   async selectPaymentMethod(): Promise<void> {

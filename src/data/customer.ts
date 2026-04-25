@@ -5,14 +5,15 @@ export type Customer = {
   password: string;
 };
 
-export const createCustomer = (): Customer => {
+export const createCustomer = (variant: 'Standard' | 'Premium'): Customer => {
   // Use a timestamp so every run gets a unique account on the demo store.
   const seed = Date.now();
+  const variantLabel = variant.toLowerCase();
 
   return {
-    firstName: 'QA',
-    lastName: `Architect${seed}`,
-    email: `qa.architect.${seed}@example.com`,
+    firstName: 'QAUser',
+    lastName: `${variant}-${seed}`,
+    email: `qauser.${variantLabel}.${seed}@example.com`,
     password: `SpreeDemo!${seed}`
   };
 };

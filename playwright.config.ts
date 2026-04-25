@@ -3,6 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 const runId = new Date().toISOString().replace(/[:.]/g, '-');
 const runOutputDir = `test-results/${runId}`;
 const isCI = !!process.env.CI;
+const baseURL = process.env.BASE_URL ?? 'https://demo.spreecommerce.org';
 
 // Central Playwright configuration shared by local runs and CI.
 export default defineConfig({
@@ -19,8 +20,8 @@ export default defineConfig({
     ['json', { outputFile: `${runOutputDir}/results.json` }]
   ],
   use: {
-    // The demo store redirects to a locale-specific path from this root URL.
-    baseURL: 'https://demo.spreecommerce.org',
+    // Allow CI to point the same test suite at staging, production, or the demo store.
+    baseURL,
     // Run headed locally, but stay headless in CI where no display server is available.
     headless: isCI,
     launchOptions: {

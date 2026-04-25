@@ -1,7 +1,8 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 type ProductDetails = {
   name: string;
+  color?: string;
   quantity: number;
   priceText: string;
 };
@@ -9,13 +10,32 @@ type ProductDetails = {
 export class CartPage {
   constructor(private readonly page: Page) {}
 
+  private main(): Locator {
+    return this.page.getByRole('main');
+  }
+
   async expectProduct(details: ProductDetails): Promise<void> {
     // Scope cart checks to the main panel so product recommendations do not interfere.
-    const main = this.page.getByRole('main');
+    const main = this.main();
     await expect(main.getByRole('heading', { name: /shopping cart/i })).toBeVisible();
     await expect(main.getByRole('heading', { name: new RegExp(details.name, 'i') })).toBeVisible();
+    if (details.color) {
+      await expect(main.getByText(new RegExp(details.color, 'i')).first()).toBeVisible();
+    }
     await expect(main.getByText(details.priceText, { exact: false }).first()).toBeVisible();
     await expect(main.getByText(details.quantity.toString(), { exact: true }).first()).toBeVisible();
+  }
+
+  async expectProducts(detailsList: ProductDetails[]): Promise<void> {
+    const main = this.main();
+    await expect(main.getByRole('heading', { name: /shopping cart/i })).toBeVisible();
+
+    for (const details of detailsList) {
+      await expect(main.getByRole('heading', { name: new RegExp(details.name, 'i') })).toBeVisible();
+      if (details.color) {
+        await expect(main.getByText(new RegExp(details.color, 'i')).first()).toBeVisible();
+      }
+    }
   }
 
   async proceedToCheckout(): Promise<void> {

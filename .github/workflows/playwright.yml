@@ -1,17 +1,35 @@
-name: Playwright Tests
+name: Playwright E2E
 
 on:
   push:
     branches: ['main', 'master']
   pull_request:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Base URL to test, for example a staging or deployed environment'
+        required: false
+        default: 'https://demo.spreecommerce.org'
+  schedule:
+    - cron: '0 3 * * *'
+
+permissions:
+  contents: read
 
 env:
   # Opt GitHub-hosted JavaScript actions into Node 24 ahead of the platform default change.
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  CI: true
+  BASE_URL: ${{ github.event.inputs.base_url || 'https://demo.spreecommerce.org' }}
+
+concurrency:
+  group: playwright-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v6
@@ -21,9 +39,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm test
+      - run: npm run test:ci
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: playwright-results
           path: test-results
+          retention-days: 7

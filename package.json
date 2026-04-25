@@ -5,6 +5,11 @@
   "description": "Playwright UI automation for the Spree Commerce demo store.",
   "scripts": {
     "test": "playwright test",
+    "test:smoke": "playwright test tests/smoke",
+    "test:regression": "playwright test tests/regression",
+    "test:ci": "playwright test tests/smoke",
+    "test:parallel": "playwright test tests/smoke --workers=2",
+    "test:parallel:4": "playwright test tests/smoke --workers=4",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "report": "playwright show-report"

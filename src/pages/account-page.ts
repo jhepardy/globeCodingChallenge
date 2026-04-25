@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import type { Customer } from '../test-data/customer';
+import type { Customer } from '../data/customer';
 
 export class AccountPage {
   constructor(private readonly page: Page) {}
