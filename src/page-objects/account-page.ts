@@ -5,6 +5,7 @@ export class AccountPage {
   constructor(private readonly page: Page) {}
 
   async expectLoginPage(): Promise<void> {
+    // Scope the checks to the main content so footer links do not create selector collisions.
     await expect(this.page.getByRole('main').getByText(/^my account$/i)).toBeVisible();
     await expect(this.page.getByRole('button', { name: /sign in/i })).toBeVisible();
   }
@@ -12,10 +13,12 @@ export class AccountPage {
   async goToRegistration(): Promise<void> {
     await this.page.getByRole('link', { name: /sign up/i }).click();
     await expect(this.page).toHaveURL(/\/account\/register$/);
+    // The first name field is a reliable signal that the registration form is ready.
     await expect(this.page.getByLabel(/first name/i)).toBeVisible();
   }
 
   async register(customer: Customer): Promise<void> {
+    // Fill the registration form from the generated customer data.
     await this.page.getByLabel(/first name/i).fill(customer.firstName);
     await this.page.getByLabel(/last name/i).fill(customer.lastName);
     await this.page.getByLabel(/^email$/i).fill(customer.email);
@@ -28,6 +31,7 @@ export class AccountPage {
   async expectSignedIn(customer: Customer): Promise<void> {
     await this.page.waitForLoadState('networkidle');
     await expect(this.page).toHaveURL(/\/account$/);
+    // Assert both profile fields so the test proves the newly created user is active.
     await expect(
       this.page.getByText(new RegExp(`${customer.firstName}\\s+${customer.lastName}`, 'i'))
     ).toBeVisible();
@@ -35,6 +39,7 @@ export class AccountPage {
   }
 
   async signOutIfVisible(): Promise<void> {
+    // Keep this helper flexible because the demo store exposes sign-out differently across states.
     const signOutButton = this.page.getByRole('button', { name: /sign out|log out/i });
     const signOutLink = this.page.getByRole('link', { name: /sign out|log out/i });
 
@@ -46,6 +51,7 @@ export class AccountPage {
   }
 
   async login(email: string, password: string): Promise<void> {
+    // Reuse the same credentials to prove the new account can authenticate again.
     await this.page.getByLabel(/^email$/i).fill(email);
     await this.page.getByLabel(/^password$/i).fill(password);
     await this.page.getByRole('button', { name: /sign in/i }).click();

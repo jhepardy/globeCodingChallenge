@@ -10,6 +10,7 @@ export class CartPage {
   constructor(private readonly page: Page) {}
 
   async expectProduct(details: ProductDetails): Promise<void> {
+    // Scope cart checks to the main panel so product recommendations do not interfere.
     const main = this.page.getByRole('main');
     await expect(main.getByRole('heading', { name: /shopping cart/i })).toBeVisible();
     await expect(main.getByRole('heading', { name: new RegExp(details.name, 'i') })).toBeVisible();
@@ -18,6 +19,7 @@ export class CartPage {
   }
 
   async proceedToCheckout(): Promise<void> {
+    // Support both cart CTA labels used by the storefront variants.
     await this.page.getByRole('link', { name: /proceed to checkout|checkout/i }).click();
     await this.page.waitForLoadState('networkidle');
     await expect(this.page).toHaveURL(/\/checkout/);

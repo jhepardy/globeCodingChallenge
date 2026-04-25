@@ -5,6 +5,7 @@ export class OrderConfirmationPage {
 
   async expectSuccess(): Promise<void> {
     await this.page.waitForLoadState('networkidle');
+    // Accept the storefront's success wording variants while still requiring an order identifier.
     await expect(this.page.getByText(/thank you|order confirmed|success/i).first()).toBeVisible({ timeout: 30000 });
     await expect(this.page.getByText(/order\s*#|order number/i)).toBeVisible();
   }

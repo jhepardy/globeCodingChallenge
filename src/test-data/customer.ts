@@ -6,6 +6,7 @@ export type Customer = {
 };
 
 export const createCustomer = (): Customer => {
+  // Use a timestamp so every run gets a unique account on the demo store.
   const seed = Date.now();
 
   return {

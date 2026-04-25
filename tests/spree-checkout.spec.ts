@@ -9,8 +9,10 @@ import { createCustomer } from '../src/test-data/customer';
 
 test.describe('Spree Commerce demo checkout', () => {
   test('registers, logs in, purchases a product, and confirms the order', async ({ page }) => {
+    // The live demo can be slow during checkout and Stripe initialization.
     test.setTimeout(120000);
 
+    // Generate a fresh shopper so repeated runs do not collide on existing accounts.
     const customer = createCustomer();
     const homePage = new HomePage(page);
     const accountPage = new AccountPage(page);
@@ -33,6 +35,7 @@ test.describe('Spree Commerce demo checkout', () => {
     });
 
     await test.step('Log out if needed and log back in with the new user', async () => {
+      // Clear browser state to force a clean login without depending on a fragile logout widget.
       await page.context().clearCookies();
       await page.goto('/us/en');
       await page.evaluate(() => {
@@ -54,6 +57,7 @@ test.describe('Spree Commerce demo checkout', () => {
     let productDetails: Awaited<ReturnType<ProductPage['captureProductDetails']>>;
 
     await test.step('Add the product to the cart', async () => {
+      // Store the product values before navigation so cart assertions use the same source values.
       productDetails = await productPage.captureProductDetails();
       await productPage.addToCart();
       await productPage.openCart();
