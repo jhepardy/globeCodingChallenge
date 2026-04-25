@@ -1,6 +1,7 @@
-# ShopSphere QA Architect Case Study
+# QE code challenge New
 
-This project contains a Playwright + TypeScript UI automation suite for the Spree Commerce demo store.
+This project contains a Playwright + TypeScript UI automation suite for the 
+Spree Commerce (https://demo.spreecommerce.org/)
 
 ## Coverage
 
