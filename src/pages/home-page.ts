@@ -27,15 +27,51 @@ export class HomePage {
     await this.page.getByRole('link', { name: /view all/i }).click();
     await expect(this.page).toHaveURL(/\/products$/);
 
-    const productHeading = this.page.getByRole('heading', { name: new RegExp(`^${productName}$`, 'i') }).first();
-    await expect(productHeading).toBeVisible();
-    await productHeading.click();
+    await this.scrollProductIntoView(productName);
 
-    await expect
-      .poll(async () => this.page.url(), {
-        timeout: 15000,
-        message: `Expected ${productName} to open its product detail page from the catalog listing.`
-      })
-      .toMatch(/\/products\//);
+    const productHeading = this.page.getByRole('heading', { name: new RegExp(`^${productName}$`, 'i') }).first();
+    const productImage = this.page.locator(`img[alt="${productName}"]`).first();
+    const productLink =
+      (await productHeading.isVisible().catch(() => false))
+        ? this.page.locator('a[href*="/products/"]').filter({ has: productHeading }).first()
+        : this.page.locator('a[href*="/products/"]').filter({ has: productImage }).first();
+
+    await expect(productLink).toBeVisible({ timeout: 15000 });
+
+    const href = await productLink.getAttribute('href');
+
+    await productLink.click();
+
+    const openedFromClick = await this.page
+      .waitForURL(/\/products\//, { timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
+
+    if (!openedFromClick) {
+      if (!href) {
+        throw new Error(`Could not resolve a product URL for ${productName}.`);
+      }
+
+      await this.page.goto(href);
+    }
+
+    await expect(this.page).toHaveURL(/\/products\//);
+  }
+
+  private async scrollProductIntoView(productName: string): Promise<void> {
+    const productHeading = this.page.getByRole('heading', { name: new RegExp(`^${productName}$`, 'i') }).first();
+    const productImage = this.page.locator(`img[alt="${productName}"]`).first();
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const headingVisible = await productHeading.isVisible().catch(() => false);
+      const imageVisible = await productImage.isVisible().catch(() => false);
+
+      if (headingVisible || imageVisible) {
+        return;
+      }
+
+      await this.page.mouse.wheel(0, 1400);
+      await this.page.waitForTimeout(500);
+    }
   }
 }

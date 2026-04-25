@@ -7,6 +7,7 @@ import { createCustomer } from '../../src/data/customer';
 import { HomePage } from '../../src/pages/home-page';
 import { OrderConfirmationPage } from '../../src/pages/order-confirmation-page';
 import { ProductPage } from '../../src/pages/product-page';
+import { saveRegisteredAccount } from '../../src/utils/registered-accounts';
 
 type TestStep = TestType<{
   page: Page;
@@ -19,7 +20,7 @@ export async function runSpreeFullCatalogCheckoutFlow(
   step: TestStep,
   selection: MultiItemCheckoutSelection
 ): Promise<void> {
-  const customer = createCustomer('Standard');
+  const customer = createCustomer('Regression');
   const homePage = new HomePage(page);
   const accountPage = new AccountPage(page);
   const productPage = new ProductPage(page);
@@ -37,6 +38,7 @@ export async function runSpreeFullCatalogCheckoutFlow(
     await accountPage.goToRegistration();
     await accountPage.register(customer);
     await accountPage.expectSignedIn(customer);
+    await saveRegisteredAccount(customer, 'regression');
   });
 
   await step('Log out if needed and log back in with the new user', async () => {

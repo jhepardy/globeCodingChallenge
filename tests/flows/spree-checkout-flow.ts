@@ -7,6 +7,7 @@ import { createCustomer } from '../../src/data/customer';
 import { HomePage } from '../../src/pages/home-page';
 import { OrderConfirmationPage } from '../../src/pages/order-confirmation-page';
 import { ProductPage } from '../../src/pages/product-page';
+import { saveRegisteredAccount } from '../../src/utils/registered-accounts';
 
 type ShippingMethod = 'Standard' | 'Premium';
 
@@ -40,6 +41,7 @@ export async function runSpreeCheckoutFlow(
     await accountPage.goToRegistration();
     await accountPage.register(customer);
     await accountPage.expectSignedIn(customer);
+    await saveRegisteredAccount(customer, `smoke-${shippingMethod.toLowerCase()}`);
   });
 
   await step('Log out if needed and log back in with the new user', async () => {
