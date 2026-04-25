@@ -1,19 +1,35 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const runId = new Date().toISOString().replace(/[:.]/g, '-');
+const runOutputDir = `test-results/${runId}`;
+
 // Central Playwright configuration shared by local runs and CI.
 export default defineConfig({
   testDir: './tests',
+  outputDir: `${runOutputDir}/artifacts`,
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: [['html', { open: 'never' }], ['list']],
+  // Keep execution single-threaded for easier observation and debugging.
+  workers: 1,
+  reporter: [
+    ['list'],
+    ['html', { open: 'never', outputFolder: `${runOutputDir}/html-report` }],
+    ['json', { outputFile: `${runOutputDir}/results.json` }]
+  ],
   use: {
     // The demo store redirects to a locale-specific path from this root URL.
     baseURL: 'https://demo.spreecommerce.org',
+    // Run headed with a visible interaction delay so each step is easy to follow.
+    headless: false,
+    launchOptions: {
+      slowMo: 400
+    },
     trace: 'on-first-retry',
+    // Keep a video for every run and screenshots only when a test fails.
+    video: 'on',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
+    testIdAttribute: 'data-testid'
   },
   projects: [
     {

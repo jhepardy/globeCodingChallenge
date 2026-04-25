@@ -20,8 +20,12 @@ export class CartPage {
 
   async proceedToCheckout(): Promise<void> {
     // Support both cart CTA labels used by the storefront variants.
-    await this.page.getByRole('link', { name: /proceed to checkout|checkout/i }).click();
-    await this.page.waitForLoadState('networkidle');
+    await Promise.all([
+      this.page.waitForURL(/\/checkout\//),
+      this.page.getByRole('link', { name: /proceed to checkout|checkout/i }).click()
+    ]);
     await expect(this.page).toHaveURL(/\/checkout/);
+    await expect(this.page.getByRole('heading', { name: /contact information/i })).toBeVisible();
+    await expect(this.page.getByRole('heading', { name: /payment method/i })).toBeVisible();
   }
 }

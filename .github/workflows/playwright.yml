@@ -5,6 +5,10 @@ on:
     branches: ['main', 'master']
   pull_request:
 
+env:
+  # Opt GitHub-hosted JavaScript actions into Node 24 ahead of the platform default change.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   e2e:
     runs-on: ubuntu-latest
@@ -13,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium

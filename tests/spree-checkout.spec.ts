@@ -69,7 +69,7 @@ test.describe('Spree Commerce demo checkout', () => {
     });
 
     await test.step('Complete shipping, delivery, payment, and place the order', async () => {
-      await checkoutPage.addShippingAddress();
+      await checkoutPage.addShippingAddress(customer);
       await checkoutPage.verifyDeliveryOptions();
       await checkoutPage.selectShippingMethod();
       await checkoutPage.selectPaymentMethod();

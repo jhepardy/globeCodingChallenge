@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import type { Customer } from '../test-data/customer';
 
 export class CheckoutPage {
   constructor(private readonly page: Page) {}
@@ -15,14 +16,15 @@ export class CheckoutPage {
     return this.page.frameLocator('iframe[src*="componentName=payment"]').first();
   }
 
-  async addShippingAddress(): Promise<void> {
+  async addShippingAddress(customer: Customer): Promise<void> {
     // The checkout page is label/placeholder-driven rather than route-step driven.
     await expect(this.page.getByRole('heading', { name: /contact information/i })).toBeVisible({ timeout: 20000 });
     await expect(this.page.getByRole('heading', { name: /shipping address/i })).toBeVisible();
 
     const email = this.page.getByLabel(/email address/i);
-    if (await email.isVisible().catch(() => false)) {
-      await email.fill('qa.checkout@example.com');
+    // Keep the account email when it is disabled; otherwise populate the generated test account email.
+    if (await email.isVisible().catch(() => false) && await email.isEditable().catch(() => false)) {
+      await email.fill(customer.email);
       await email.press('Tab');
     }
 
@@ -35,9 +37,9 @@ export class CheckoutPage {
     const firstName = this.page.getByLabel(/first name/i);
     if (await firstName.isVisible().catch(() => false)) {
       // Tab between fields to trigger blur-based validation used by the live demo.
-      await firstName.fill('QA');
+      await firstName.fill(customer.firstName);
       await firstName.press('Tab');
-      await this.page.getByLabel(/last name/i).fill('Architect');
+      await this.page.getByLabel(/last name/i).fill(customer.lastName);
       await this.page.getByLabel(/last name/i).press('Tab');
       await this.page.getByLabel(/^address$/i).fill('221B Test Street');
       await this.page.getByLabel(/^address$/i).press('Tab');
@@ -65,7 +67,8 @@ export class CheckoutPage {
 
       const phone = this.page.getByLabel(/phone/i);
       if (await phone.isVisible().catch(() => false)) {
-        await phone.fill('09171234567');
+        // Use a valid US-format mobile number because checkout is set to United States.
+        await phone.fill('2025550143');
         await phone.press('Tab');
       }
     }
@@ -101,20 +104,36 @@ export class CheckoutPage {
   }
 
   async selectPaymentMethod(): Promise<void> {
-    // The payment option is the last radio currently exposed on the page after shipping controls.
-    const paymentMethod = this.page.getByRole('radio').last();
+    // The payment section exposes Credit card as the active radio option on the page itself.
+    const paymentMethod = this.page
+      .locator('#checkout-section-payment')
+      .getByRole('radio')
+      .filter({ has: this.page.locator('[data-state="checked"], [data-state="unchecked"]') })
+      .first();
+
     await expect(paymentMethod).toBeVisible({ timeout: 20000 });
-    await paymentMethod.check();
+
+    if ((await paymentMethod.getAttribute('aria-checked')) !== 'true') {
+      await paymentMethod.click();
+    }
+
+    await expect(paymentMethod).toHaveAttribute('aria-checked', 'true');
+    await expect(this.page.locator('#checkout-section-payment').getByText(/^credit card$/i)).toBeVisible();
   }
 
   async fillPaymentDetailsFromHints(): Promise<void> {
     // The demo explicitly shows the Stripe test card details; use those values in the iframe fields.
-    await expect(this.page.getByText(/test card:\s*4242/i)).toBeVisible({ timeout: 20000 });
+    await expect(this.page.getById('payment-numberInput')).toBeVisible({ timeout: 20000 });
 
     const cardFrame = this.paymentFrame();
-    await cardFrame.getByPlaceholder('1234 1234 1234 1234').fill('4242424242424242');
-    await cardFrame.getByPlaceholder('MM / YY').fill('12/34');
-    await cardFrame.getByPlaceholder('CVC').fill('123');
+    const cardNumber = cardFrame.locator('input[name="number"], #payment-numberInput').first();
+    const expiry = cardFrame.locator('input[name="expiry"], input[autocomplete="cc-exp"]').first();
+    const cvc = cardFrame.locator('input[name="cvc"], input[autocomplete="cc-csc"]').first();
+
+    await expect(cardNumber).toBeVisible({ timeout: 20000 });
+    await cardNumber.fill('4242424242424242');
+    await expiry.fill('12/30');
+    await cvc.fill('123');
 
     const postalCode = cardFrame.getByPlaceholder(/zip|postal/i);
     if (await postalCode.isVisible().catch(() => false)) {
@@ -123,12 +142,7 @@ export class CheckoutPage {
   }
 
   async placeOrder(): Promise<void> {
-    // Accept the storefront policies when the consent control is rendered as clickable text.
-    const policyAgreement = this.page.getByText(/i agree to the privacy policy and terms of service/i);
-    if (await policyAgreement.isVisible().catch(() => false)) {
-      await policyAgreement.click();
-    }
-
+    // The live DOM shows a direct Pay Now CTA without an extra policy checkbox in this checkout variant.
     await this.page.getByRole('button', { name: /place order|complete order|pay now/i }).click();
   }
 }
