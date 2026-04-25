@@ -5,6 +5,7 @@ import { CheckoutPage } from '../../src/pages/checkout-page';
 import type { CheckoutSelection } from '../../src/data/checkout-selections';
 import { createCustomer } from '../../src/data/customer';
 import { HomePage } from '../../src/pages/home-page';
+import { MobileHomePage } from '../../src/pages/mobile-home-page';
 import { OrderConfirmationPage } from '../../src/pages/order-confirmation-page';
 import { ProductPage } from '../../src/pages/product-page';
 import { saveRegisteredAccount } from '../../src/utils/registered-accounts';
@@ -29,7 +30,7 @@ export async function runSpreeCheckoutFlow(
 ): Promise<void> {
   // Build all page models up front so the flow reads like the business journey.
   const customer = createCustomer(shippingMethod);
-  const homePage = new HomePage(page);
+  const homePage = page.viewportSize()?.width === 375 ? new MobileHomePage(page) : new HomePage(page);
   const accountPage = new AccountPage(page);
   const productPage = new ProductPage(page);
   const cartPage = new CartPage(page);

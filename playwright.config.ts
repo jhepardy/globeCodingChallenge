@@ -37,11 +37,35 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
+      name: 'chromium-desktop',
       use: {
         // Lock viewport size so the header and checkout layout stay predictable.
         ...devices['Desktop Chrome'],
         viewport: { width: 1440, height: 1100 }
+      }
+    },
+    {
+      name: 'chromium-mobile-sm',
+      use: {
+        // Keep mobile coverage on Chromium so the suite runs with the installed browser only.
+        ...devices['Desktop Chrome'],
+        browserName: 'chromium',
+        viewport: { width: 375, height: 812 },
+        isMobile: true,
+        hasTouch: true,
+        deviceScaleFactor: 3
+      }
+    },
+    {
+      name: 'chromium-tablet',
+      use: {
+        // Keep tablet coverage on Chromium while still exercising touch-oriented layouts.
+        ...devices['Desktop Chrome'],
+        browserName: 'chromium',
+        viewport: { width: 1024, height: 1366 },
+        isMobile: true,
+        hasTouch: true,
+        deviceScaleFactor: 2
       }
     }
   ]

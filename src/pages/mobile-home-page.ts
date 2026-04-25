@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-export class HomePage {
+export class MobileHomePage {
   readonly page: Page;
 
   constructor(page: Page) {
@@ -16,28 +16,22 @@ export class HomePage {
   }
 
   async openAccount(): Promise<void> {
-    const accountLink = this.page.getByRole('link', { name: 'Account', exact: true });
-
-    if (await accountLink.first().isVisible().catch(() => false)) {
-      await accountLink.first().click();
-      return;
-    }
-
     await this.openNavigationMenu();
-    await expect(accountLink.first()).toBeVisible({ timeout: 10000 });
-    await accountLink.first().click();
+
+    const myAccountButton = this.page.getByRole('button', { name: /my account/i }).first();
+    const myAccountLink = this.page.getByRole('link', { name: /my account/i }).first();
+    const accountEntry = await this.firstVisible([myAccountButton, myAccountLink]);
+
+    await expect(accountEntry).toBeVisible({ timeout: 10000 });
+    await accountEntry.click();
   }
 
   async openFeaturedProduct(productName: string): Promise<void> {
-    // Use the full catalog first so the product link comes from a stable listing instead of a carousel.
-    const viewAllLink = this.page.getByRole('link', { name: /view all/i }).first();
+    await this.openNavigationMenu();
 
-    if (!await viewAllLink.isVisible().catch(() => false)) {
-      await this.openNavigationMenu();
-    }
-
-    await expect(viewAllLink).toBeVisible({ timeout: 10000 });
-    await viewAllLink.click();
+    const allProductsLink = this.page.getByRole('link', { name: /all products/i }).first();
+    await expect(allProductsLink).toBeVisible({ timeout: 10000 });
+    await allProductsLink.click();
     await expect(this.page).toHaveURL(/\/products$/);
 
     await this.scrollProductIntoView(productName);
@@ -50,24 +44,7 @@ export class HomePage {
         : this.page.locator('a[href*="/products/"]').filter({ has: productImage }).first();
 
     await expect(productLink).toBeVisible({ timeout: 15000 });
-
-    const href = await productLink.getAttribute('href');
-
     await productLink.click();
-
-    const openedFromClick = await this.page
-      .waitForURL(/\/products\//, { timeout: 5000 })
-      .then(() => true)
-      .catch(() => false);
-
-    if (!openedFromClick) {
-      if (!href) {
-        throw new Error(`Could not resolve a product URL for ${productName}.`);
-      }
-
-      await this.page.goto(href);
-    }
-
     await expect(this.page).toHaveURL(/\/products\//);
   }
 
@@ -104,6 +81,16 @@ export class HomePage {
       return;
     }
 
-    throw new Error('Could not find a visible navigation menu trigger for the current viewport.');
+    throw new Error('Could not find a visible navigation menu trigger for the mobile viewport.');
+  }
+
+  private async firstVisible(locators: Locator[]): Promise<Locator> {
+    for (const locator of locators) {
+      if (await locator.isVisible().catch(() => false)) {
+        return locator;
+      }
+    }
+
+    return locators[0];
   }
 }
