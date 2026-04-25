@@ -11,6 +11,7 @@ export const createCustomer = (variant: 'Standard' | 'Premium' | 'Regression'): 
   const variantLabel = variant.toLowerCase();
 
   if (variant === 'Regression') {
+    // Give regression runs a distinct naming pattern so stored artifacts are easier to scan.
     return {
       firstName: 'Regression',
       lastName: `QA-${seed}`,
@@ -19,6 +20,7 @@ export const createCustomer = (variant: 'Standard' | 'Premium' | 'Regression'): 
     };
   }
 
+  // Encode the shipping variant in the generated identity for quick traceability.
   return {
     firstName: 'QAUser',
     lastName: `${variant}-${seed}`,

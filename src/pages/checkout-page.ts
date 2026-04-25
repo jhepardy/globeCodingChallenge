@@ -17,12 +17,14 @@ export class CheckoutPage {
   }
 
   private shippingOptionLabels(): Locator {
+    // Each option should surface a shopper-visible price or free-shipping label.
     return this.shippingMethodSection().locator('label, [role="radio"]').filter({
       hasText: /\$\d+\.\d{2}|free/i
     });
   }
 
   private shippingMethodRadio(methodName: string): Locator {
+    // Keep the selector close to the rendered accessibility name instead of DOM-specific classes.
     return this.shippingMethodSection().getByRole('radio', { name: new RegExp(methodName, 'i') }).first();
   }
 
@@ -107,6 +109,7 @@ export class CheckoutPage {
     const shippingOptions = this.shippingOptionLabels();
     await expect(shippingOptions.first()).toBeVisible({ timeout: 15000 });
 
+    // Verify both that options exist and that every rendered option includes pricing text.
     const optionCount = await shippingOptions.count();
     expect(optionCount).toBeGreaterThan(0);
 
@@ -160,6 +163,7 @@ export class CheckoutPage {
     const expiry = cardFrame.locator('input[name="expiry"], input[autocomplete="cc-exp"]').first();
     const cvc = cardFrame.locator('input[name="cvc"], input[autocomplete="cc-csc"]').first();
 
+    // Populate the hosted Stripe fields with the demo card values shown on the page.
     await expect(cardNumber).toBeVisible({ timeout: 20000 });
     await cardNumber.fill('4242424242424242');
     await expiry.fill('12/30');

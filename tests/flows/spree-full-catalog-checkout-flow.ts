@@ -15,6 +15,7 @@ type TestStep = TestType<{
   page: Page;
 }>['step'];
 
+// Mirror the smoke flow contract so specs can share the same fixture helpers.
 type RunContextSetter = (context: Record<string, unknown>) => void;
 
 export async function runSpreeFullCatalogCheckoutFlow(
@@ -23,6 +24,7 @@ export async function runSpreeFullCatalogCheckoutFlow(
   selection: MultiItemCheckoutSelection,
   setRunContext?: RunContextSetter
 ): Promise<void> {
+  // Reuse the same page object model for the heavier regression scenarios.
   const customer = createCustomer('Regression');
   const homePage = new HomePage(page);
   const accountPage = new AccountPage(page);
@@ -31,6 +33,7 @@ export async function runSpreeFullCatalogCheckoutFlow(
   const checkoutPage = new CheckoutPage(page);
   const confirmationPage = new OrderConfirmationPage(page);
 
+  // Persist scenario details so failed catalog runs are easier to reconstruct from artifacts.
   setRunContext?.({
     suite: 'regression',
     shippingMethod: 'Standard',
@@ -61,6 +64,7 @@ export async function runSpreeFullCatalogCheckoutFlow(
   const addedProducts: Awaited<ReturnType<ProductPage['captureProductDetails']>>[] = [];
 
   await step('Add one of each configured product to the cart', async () => {
+    // Loop through the configured products instead of hard-coding repeated steps in the spec.
     for (const item of selection.items) {
       await page.goto('/us/en');
       await homePage.openFeaturedProduct(item.productName);

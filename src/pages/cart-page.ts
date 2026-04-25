@@ -11,10 +11,12 @@ export class CartPage {
   constructor(private readonly page: Page) {}
 
   private main(): Locator {
+    // Scope cart assertions to the main content so drawer or header text does not interfere.
     return this.page.getByRole('main');
   }
 
   async expectProduct(details: ProductDetails): Promise<void> {
+    // Read the rendered cart rows once, then compare the captured PDP values against them.
     const actualItems = await this.readCartItems();
     const matchingIndex = this.findMatchingCartItemIndex(actualItems, details);
 
@@ -30,6 +32,7 @@ export class CartPage {
   }
 
   async expectProducts(detailsList: ProductDetails[]): Promise<void> {
+    // Consume matches as they are found so duplicate products can still be validated correctly.
     const unmatchedItems = [...await this.readCartItems()];
 
     for (const details of detailsList) {
@@ -61,6 +64,7 @@ export class CartPage {
   }
 
   private findMatchingCartItemIndex(actualItems: ProductDetails[], expectedItem: ProductDetails): number {
+    // Match on the fields that represent the shopper's chosen variant and quantity.
     return actualItems.findIndex((item) => {
       const nameMatches = item.name === expectedItem.name;
       const colorMatches = !expectedItem.color || item.color === expectedItem.color;
@@ -74,11 +78,13 @@ export class CartPage {
     const main = this.main();
     await expect(main.getByRole('heading', { name: /shopping cart/i })).toBeVisible();
 
+    // Parse each visible cart row in the browser so we can normalize the live markup once.
     const cartItems = await main.locator('h3').evaluateAll((headings) => {
       const normalize = (value: string | null | undefined) => value?.replace(/\s+/g, ' ').trim() ?? '';
 
       return headings
         .map((heading) => {
+          // Walk upward until we reach the cart row that owns the quantity and remove controls.
           let row: HTMLElement | null = heading.parentElement;
 
           while (row && row !== document.body) {
@@ -96,6 +102,7 @@ export class CartPage {
             return null;
           }
 
+          // Extract just the shopper-visible values we later assert in the test.
           const name = normalize(heading.textContent);
           const colorLabel = normalize(
             Array.from(row.querySelectorAll('p'))

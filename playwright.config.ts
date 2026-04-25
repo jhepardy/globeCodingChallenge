@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Stamp each run with a unique folder so local executions do not overwrite prior artifacts.
 const runId = new Date().toISOString().replace(/[:.]/g, '-');
 const runOutputDir = `test-results/${runId}`;
 const isCI = !!process.env.CI;
@@ -15,6 +16,7 @@ export default defineConfig({
   // Keep execution single-threaded for easier observation and debugging.
   workers: 1,
   reporter: [
+    // Keep human-readable, shareable, and machine-readable reports from the same execution.
     ['list'],
     ['html', { open: 'never', outputFolder: `${runOutputDir}/html-report` }],
     ['json', { outputFile: `${runOutputDir}/results.json` }]

@@ -11,6 +11,7 @@ export class ProductPage {
   constructor(private readonly page: Page) {}
 
   private quantityValue(): Locator {
+    // The quantity display sits between the decrease and increase controls.
     return this.page.getByRole('button', { name: /increase quantity/i }).locator('xpath=preceding-sibling::span[1]');
   }
 
@@ -21,6 +22,7 @@ export class ProductPage {
   }
 
   async selectColor(colorName: string): Promise<void> {
+    // Color swatches expose the chosen variant through the button title.
     const colorButton = this.page.locator(`button[title="${colorName}"]`).first();
     await expect(colorButton).toBeVisible({ timeout: 15000 });
     await colorButton.click();
@@ -30,6 +32,7 @@ export class ProductPage {
   async setQuantity(quantity: number): Promise<void> {
     expect(quantity).toBeGreaterThan(0);
 
+    // Compare against the current PDP quantity so the helper can increase or decrease as needed.
     const decreaseQuantityButton = this.page.getByRole('button', { name: /decrease quantity/i });
     const increaseQuantityButton = this.page.getByRole('button', { name: /increase quantity/i });
     const quantityValue = this.quantityValue();
@@ -44,6 +47,7 @@ export class ProductPage {
     const quantityButton = quantity > currentQuantity ? increaseQuantityButton : decreaseQuantityButton;
     const steps = Math.abs(quantity - currentQuantity);
 
+    // Click one step at a time because the component updates after each interaction.
     for (let step = 0; step < steps; step += 1) {
       await quantityButton.click();
     }

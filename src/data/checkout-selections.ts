@@ -4,6 +4,7 @@ export type CheckoutSelection = {
   quantity: number;
 };
 
+// Use a separate cart-item type so regression flows can mix products with and without variants.
 export type CartItemSelection = {
   productName: string;
   color?: string;
@@ -14,6 +15,7 @@ export type MultiItemCheckoutSelection = {
   items: CartItemSelection[];
 };
 
+// Centralize smoke data so specs stay declarative and easy to expand.
 export const checkoutSelections = {
   automaticStandard: {
     productName: 'Automatic Espresso Machine',
@@ -32,6 +34,7 @@ export const checkoutSelections = {
   }
 } satisfies Record<string, CheckoutSelection>;
 
+// Provide richer regression baskets without hard-coding item lists inside the test files.
 export const multiItemCheckoutSelections = {
   fullCatalogCart: {
     items: [

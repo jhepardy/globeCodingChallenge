@@ -17,6 +17,7 @@ type TestStep = TestType<{
   page: Page;
 }>['step'];
 
+// Let the fixture store scenario metadata without coupling the flow to a specific reporter.
 type RunContextSetter = (context: Record<string, unknown>) => void;
 
 export async function runSpreeCheckoutFlow(
@@ -26,6 +27,7 @@ export async function runSpreeCheckoutFlow(
   selection: CheckoutSelection,
   setRunContext?: RunContextSetter
 ): Promise<void> {
+  // Build all page models up front so the flow reads like the business journey.
   const customer = createCustomer(shippingMethod);
   const homePage = new HomePage(page);
   const accountPage = new AccountPage(page);
@@ -34,6 +36,7 @@ export async function runSpreeCheckoutFlow(
   const checkoutPage = new CheckoutPage(page);
   const confirmationPage = new OrderConfirmationPage(page);
 
+  // Capture enough run metadata to troubleshoot failures after the browser closes.
   setRunContext?.({
     suite: 'smoke',
     shippingMethod,
@@ -70,6 +73,7 @@ export async function runSpreeCheckoutFlow(
   let productDetails: Awaited<ReturnType<ProductPage['captureProductDetails']>>;
 
   await step(`Select product options and add ${selection.productName} to the cart`, async () => {
+    // Save the exact PDP state before the cart reshapes product data into a summary row.
     await productPage.selectColor(selection.color);
     await productPage.setQuantity(selection.quantity);
     productDetails = await productPage.captureProductDetails(selection.color, selection.quantity);

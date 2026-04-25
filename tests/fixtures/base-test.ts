@@ -1,5 +1,6 @@
 import { expect, test as base } from '@playwright/test';
 
+// Allow tests to stash arbitrary scenario details for attachments on failure.
 type RunContext = Record<string, unknown>;
 type RunContextStore = {
   data: RunContext;
@@ -10,10 +11,12 @@ export const test = base.extend<{
   runContextStore: RunContextStore;
   captureFailureContext: void;
 }>({
+  // Keep one mutable store per test so helper layers can contribute context incrementally.
   runContextStore: [async ({}, use) => {
     await use({ data: {} });
   }, { scope: 'test' }],
 
+  // Expose a small merge helper rather than passing the store object to every test.
   setRunContext: async ({ runContextStore }, use) => {
     await use((context: RunContext) => {
       runContextStore.data = {
@@ -26,10 +29,12 @@ export const test = base.extend<{
   captureFailureContext: [async ({ page, runContextStore }, use, testInfo) => {
     await use();
 
+    // Skip the extra artifact collection when the test outcome matches expectations.
     if (testInfo.status === testInfo.expectedStatus) {
       return;
     }
 
+    // Collect the most useful live-page diagnostics before teardown changes the page state.
     const currentUrl = page.url();
     const pageTitle = await page.title().catch(() => '');
     const mainContent = await page.getByRole('main').innerText().catch(async () =>
@@ -52,6 +57,7 @@ export const test = base.extend<{
       return values;
     }).catch(() => ({}));
 
+    // Attach lightweight debugging assets directly to the Playwright report.
     await testInfo.attach('current-url', {
       body: currentUrl,
       contentType: 'text/plain'
