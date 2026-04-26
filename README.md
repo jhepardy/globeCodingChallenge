@@ -3,6 +3,11 @@
 This project contains a Playwright + TypeScript UI automation suite for the 
 Spree Commerce (https://demo.spreecommerce.org/)
 
+## Locales
+
+Current Locale: US only.
+
+
 ## Coverage
 
 - Navigate to the Spree demo storefront
