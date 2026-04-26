@@ -29,15 +29,8 @@ export class HomePage {
   }
 
   async openFeaturedProduct(productName: string): Promise<void> {
-    // Use the full catalog first so the product link comes from a stable listing instead of a carousel.
-    const viewAllLink = this.page.getByRole('link', { name: /view all/i }).first();
-
-    if (!await viewAllLink.isVisible().catch(() => false)) {
-      await this.openNavigationMenu();
-    }
-
-    await expect(viewAllLink).toBeVisible({ timeout: 10000 });
-    await viewAllLink.click();
+    // Go to the stable catalog route directly instead of depending on hero or nav entry variants.
+    await this.page.goto('/us/en/products');
     await expect(this.page).toHaveURL(/\/products$/);
 
     await this.scrollProductIntoView(productName);

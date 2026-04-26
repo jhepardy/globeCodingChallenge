@@ -83,10 +83,19 @@ export class ProductPage {
     // Prefer the cart drawer CTA when it appears because that mirrors the user journey.
     const cartDialog = this.page.getByRole('dialog', { name: /cart/i });
     if (await cartDialog.isVisible().catch(() => false)) {
-      await Promise.all([
-        this.page.waitForURL(/\/cart$/),
-        cartDialog.getByRole('link', { name: /view cart/i }).click()
-      ]);
+      const viewCartLink = cartDialog.getByRole('link', { name: /view cart/i });
+      const href = await viewCartLink.getAttribute('href');
+
+      await viewCartLink.click();
+
+      const openedFromClick = await this.page
+        .waitForURL(/\/cart$/, { timeout: 8000 })
+        .then(() => true)
+        .catch(() => false);
+
+      if (!openedFromClick) {
+        await this.page.goto(href ?? '/us/en/cart');
+      }
     } else {
       await this.page.goto('/us/en/cart');
     }

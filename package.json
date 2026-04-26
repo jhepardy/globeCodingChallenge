@@ -9,6 +9,7 @@
     "test:mobile": "playwright test --project=chromium-mobile-sm",
     "test:tablet": "playwright test --project=chromium-tablet",
     "test:smoke": "playwright test tests/smoke --project=chromium-desktop",
+    "test:smoke:noslowmo": "PLAYWRIGHT_NO_SLOWMO=1 playwright test tests/smoke --project=chromium-desktop",
     "test:smoke:web": "playwright test tests/smoke --project=chromium-desktop",
     "test:smoke:mobile": "playwright test tests/smoke --project=chromium-mobile-sm",
     "test:smoke:tablet": "playwright test tests/smoke --project=chromium-tablet",

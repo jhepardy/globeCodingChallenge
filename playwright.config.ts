@@ -4,6 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 const runId = new Date().toISOString().replace(/[:.]/g, '-');
 const runOutputDir = `test-results/${runId}`;
 const isCI = !!process.env.CI;
+const disableSlowMo = process.env.PLAYWRIGHT_NO_SLOWMO === '1';
 const baseURL = process.env.BASE_URL ?? 'https://demo.spreecommerce.org';
 
 // Central Playwright configuration shared by local runs and CI.
@@ -27,7 +28,7 @@ export default defineConfig({
     // Run headed locally, but stay headless in CI where no display server is available.
     headless: isCI,
     launchOptions: {
-      slowMo: isCI ? 0 : 400
+      slowMo: isCI || disableSlowMo ? 0 : 400
     },
     trace: 'retain-on-failure',
     // Keep richer artifacts only when a test fails so local runs stay readable.

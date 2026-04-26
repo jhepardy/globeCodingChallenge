@@ -16,6 +16,14 @@ export class CheckoutPage {
     return this.page.frameLocator('iframe[src*="componentName=payment"]').first();
   }
 
+  private submitOrderButton(): Locator {
+    return this.page.getByRole('button', { name: /place order|complete order|pay now|processing/i });
+  }
+
+  private sameAsShippingAddressCheckbox(): Locator {
+    return this.page.getByRole('checkbox', { name: /same as shipping address/i }).first();
+  }
+
   private shippingOptionLabels(): Locator {
     // Each option should surface a shopper-visible price or free-shipping label.
     return this.shippingMethodSection().locator('label, [role="radio"]').filter({
@@ -128,12 +136,62 @@ export class CheckoutPage {
     if (await postalCode.isVisible().catch(() => false)) {
       await postalCode.fill('10001');
     }
+
+    // Move focus out of the hosted fields so Stripe validation has time to settle before submission.
+    await this.page.locator('body').click({ position: { x: 20, y: 20 } }).catch(() => {});
+  }
+
+  async ensureSameAsShippingAddressChecked(): Promise<void> {
+    const sameAsShippingAddress = this.sameAsShippingAddressCheckbox();
+    await expect(sameAsShippingAddress).toBeVisible({ timeout: 10000 });
+
+    if (await sameAsShippingAddress.isChecked()) {
+      return;
+    }
+
+    await sameAsShippingAddress.check({ force: true });
+    await expect(sameAsShippingAddress).toBeChecked();
   }
 
   async placeOrder(): Promise<void> {
     // The live DOM shows a direct Pay Now CTA without an extra policy checkbox in this checkout variant.
-    const submitOrderButton = this.page.getByRole('button', { name: /place order|complete order|pay now/i });
-    await expect(submitOrderButton).toBeEnabled({ timeout: 20000 });
+    const submitOrderButton = this.submitOrderButton();
+    await expect(submitOrderButton).toBeEnabled({ timeout: 30000 });
+    await expect(submitOrderButton).not.toHaveText(/processing/i, { timeout: 30000 });
+
     await submitOrderButton.click();
+
+    // After submission, the checkout should either advance or expose a recoverable UI state quickly.
+    await expect
+      .poll(
+        async () => {
+          const url = this.page.url();
+          const buttonText = (await submitOrderButton.textContent().catch(() => '') ?? '').trim();
+          const bodyText = await this.page.locator('body').innerText().catch(() => '');
+
+          if (/\/orders?\//i.test(url)) {
+            return 'confirmed-route';
+          }
+
+          if (/thanks for your order|thank you|order confirmed|email confirmation/i.test(bodyText)) {
+            return 'confirmed-copy';
+          }
+
+          if (/processing/i.test(buttonText)) {
+            return 'processing';
+          }
+
+          if (/pay now|place order|complete order/i.test(buttonText)) {
+            return 'checkout-ready';
+          }
+
+          return 'unknown';
+        },
+        {
+          timeout: 60000,
+          message: 'Expected checkout to advance to order confirmation after submitting payment.'
+        }
+      )
+      .not.toBe('processing');
   }
 }

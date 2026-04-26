@@ -109,6 +109,7 @@ export async function runSpreeFullCatalogCheckoutFlow(
     await checkoutAssertions.expectPaymentMethodSelected();
     await checkoutAssertions.expectPaymentHintsVisible();
     await checkoutPage.fillPaymentDetailsFromHints();
+    await checkoutPage.ensureSameAsShippingAddressChecked();
     await checkoutPage.placeOrder();
   });
 
