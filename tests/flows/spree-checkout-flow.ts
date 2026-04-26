@@ -1,4 +1,10 @@
 import { expect, type Page, type TestType } from '@playwright/test';
+import { AccountAssertions } from '../assertions/account.assert';
+import { CartAssertions } from '../assertions/cart.assert';
+import { CheckoutAssertions } from '../assertions/checkout.assert';
+import { HomeAssertions } from '../assertions/home.assert';
+import { OrderConfirmationAssertions } from '../assertions/order-confirmation.assert';
+import { ProductAssertions } from '../assertions/product.assert';
 import { AccountPage } from '../../src/pages/account-page';
 import { CartPage } from '../../src/pages/cart-page';
 import { CheckoutPage } from '../../src/pages/checkout-page';
@@ -6,7 +12,6 @@ import type { CheckoutSelection } from '../../src/data/checkout-selections';
 import { createCustomer } from '../../src/data/customer';
 import { HomePage } from '../../src/pages/home-page';
 import { MobileHomePage } from '../../src/pages/mobile-home-page';
-import { OrderConfirmationPage } from '../../src/pages/order-confirmation-page';
 import { ProductPage } from '../../src/pages/product-page';
 import { saveRegisteredAccount } from '../../src/utils/registered-accounts';
 
@@ -35,7 +40,12 @@ export async function runSpreeCheckoutFlow(
   const productPage = new ProductPage(page);
   const cartPage = new CartPage(page);
   const checkoutPage = new CheckoutPage(page);
-  const confirmationPage = new OrderConfirmationPage(page);
+  const homeAssertions = new HomeAssertions(page);
+  const accountAssertions = new AccountAssertions(page);
+  const productAssertions = new ProductAssertions(page);
+  const cartAssertions = new CartAssertions(page);
+  const checkoutAssertions = new CheckoutAssertions(page);
+  const confirmationAssertions = new OrderConfirmationAssertions(page);
 
   // Capture enough run metadata to troubleshoot failures after the browser closes.
   setRunContext?.({
@@ -47,20 +57,21 @@ export async function runSpreeCheckoutFlow(
 
   await step('Navigate to the Spree Commerce demo store', async () => {
     await homePage.goto();
+    await homeAssertions.expectStorefrontLoaded();
   });
 
   await step('Open the account page and register a new user', async () => {
     await homePage.openAccount();
-    await accountPage.expectLoginPage();
+    await accountAssertions.expectLoginPage();
     await accountPage.goToRegistration();
     await accountPage.register(customer);
-    await accountPage.expectSignedIn(customer);
+    await accountAssertions.expectSignedIn(customer);
     await saveRegisteredAccount(customer, `smoke-${shippingMethod.toLowerCase()}`);
   });
 
   await step('Log out if needed and log back in with the new user', async () => {
     await accountPage.ensureSignedOut();
-    await accountPage.expectLoginPage();
+    await accountAssertions.expectLoginPage();
     await accountPage.login(customer.email, customer.password);
     await expect(page).toHaveURL(/\/account$/);
   });
@@ -68,7 +79,7 @@ export async function runSpreeCheckoutFlow(
   await step('Browse products and open the product detail page', async () => {
     await page.goto('/us/en');
     await homePage.openFeaturedProduct(selection.productName);
-    await productPage.expectLoaded(selection.productName);
+    await productAssertions.expectLoaded(selection.productName);
   });
 
   let productDetails: Awaited<ReturnType<ProductPage['captureProductDetails']>>;
@@ -83,20 +94,24 @@ export async function runSpreeCheckoutFlow(
   });
 
   await step('Verify cart product details and proceed to checkout', async () => {
-    await cartPage.expectProduct(productDetails);
+    await cartAssertions.expectProduct(productDetails);
     await cartPage.proceedToCheckout();
+    await checkoutAssertions.expectCheckoutLoaded();
   });
 
   await step(`Complete checkout with ${shippingMethod} shipping`, async () => {
     await checkoutPage.addShippingAddress(customer);
-    await checkoutPage.verifyDeliveryOptions();
+    await checkoutAssertions.expectDeliveryOptions();
     await checkoutPage.selectShippingMethod(shippingMethod);
+    await checkoutAssertions.expectShippingMethodSelected(shippingMethod);
     await checkoutPage.selectPaymentMethod();
+    await checkoutAssertions.expectPaymentMethodSelected();
+    await checkoutAssertions.expectPaymentHintsVisible();
     await checkoutPage.fillPaymentDetailsFromHints();
     await checkoutPage.placeOrder();
   });
 
   await step('Verify the order confirmation page', async () => {
-    await confirmationPage.expectSuccess();
+    await confirmationAssertions.expectSuccess();
   });
 }

@@ -1,11 +1,16 @@
 import { expect, type Page, type TestType } from '@playwright/test';
+import { AccountAssertions } from '../assertions/account.assert';
+import { CartAssertions } from '../assertions/cart.assert';
+import { CheckoutAssertions } from '../assertions/checkout.assert';
+import { HomeAssertions } from '../assertions/home.assert';
+import { OrderConfirmationAssertions } from '../assertions/order-confirmation.assert';
+import { ProductAssertions } from '../assertions/product.assert';
 import { AccountPage } from '../../src/pages/account-page';
 import { CartPage } from '../../src/pages/cart-page';
 import { CheckoutPage } from '../../src/pages/checkout-page';
 import type { MultiItemCheckoutSelection } from '../../src/data/checkout-selections';
 import { createCustomer } from '../../src/data/customer';
 import { HomePage } from '../../src/pages/home-page';
-import { OrderConfirmationPage } from '../../src/pages/order-confirmation-page';
 import { ProductPage } from '../../src/pages/product-page';
 import { saveRegisteredAccount } from '../../src/utils/registered-accounts';
 
@@ -31,7 +36,12 @@ export async function runSpreeFullCatalogCheckoutFlow(
   const productPage = new ProductPage(page);
   const cartPage = new CartPage(page);
   const checkoutPage = new CheckoutPage(page);
-  const confirmationPage = new OrderConfirmationPage(page);
+  const homeAssertions = new HomeAssertions(page);
+  const accountAssertions = new AccountAssertions(page);
+  const productAssertions = new ProductAssertions(page);
+  const cartAssertions = new CartAssertions(page);
+  const checkoutAssertions = new CheckoutAssertions(page);
+  const confirmationAssertions = new OrderConfirmationAssertions(page);
 
   // Persist scenario details so failed catalog runs are easier to reconstruct from artifacts.
   setRunContext?.({
@@ -43,20 +53,21 @@ export async function runSpreeFullCatalogCheckoutFlow(
 
   await step('Navigate to the Spree Commerce demo store', async () => {
     await homePage.goto();
+    await homeAssertions.expectStorefrontLoaded();
   });
 
   await step('Open the account page and register a new user', async () => {
     await homePage.openAccount();
-    await accountPage.expectLoginPage();
+    await accountAssertions.expectLoginPage();
     await accountPage.goToRegistration();
     await accountPage.register(customer);
-    await accountPage.expectSignedIn(customer);
+    await accountAssertions.expectSignedIn(customer);
     await saveRegisteredAccount(customer, 'regression');
   });
 
   await step('Log out if needed and log back in with the new user', async () => {
     await accountPage.ensureSignedOut();
-    await accountPage.expectLoginPage();
+    await accountAssertions.expectLoginPage();
     await accountPage.login(customer.email, customer.password);
     await expect(page).toHaveURL(/\/account$/);
   });
@@ -68,14 +79,14 @@ export async function runSpreeFullCatalogCheckoutFlow(
     for (const item of selection.items) {
       await page.goto('/us/en');
       await homePage.openFeaturedProduct(item.productName);
-      await productPage.expectLoaded(item.productName);
+      await productAssertions.expectLoaded(item.productName);
 
       if (item.color) {
         await productPage.selectColor(item.color);
       }
 
       await productPage.setQuantity(item.quantity);
-      await productPage.expectQuantity(item.quantity);
+      await productAssertions.expectQuantity(item.quantity);
       addedProducts.push(await productPage.captureProductDetails(item.color, item.quantity));
       await productPage.addToCart();
     }
@@ -84,20 +95,24 @@ export async function runSpreeFullCatalogCheckoutFlow(
   });
 
   await step('Verify the cart contains the configured products and proceed to checkout', async () => {
-    await cartPage.expectProducts(addedProducts);
+    await cartAssertions.expectProducts(addedProducts);
     await cartPage.proceedToCheckout();
+    await checkoutAssertions.expectCheckoutLoaded();
   });
 
   await step('Complete checkout with Standard shipping', async () => {
     await checkoutPage.addShippingAddress(customer);
-    await checkoutPage.verifyDeliveryOptions();
+    await checkoutAssertions.expectDeliveryOptions();
     await checkoutPage.selectShippingMethod('Standard');
+    await checkoutAssertions.expectShippingMethodSelected('Standard');
     await checkoutPage.selectPaymentMethod();
+    await checkoutAssertions.expectPaymentMethodSelected();
+    await checkoutAssertions.expectPaymentHintsVisible();
     await checkoutPage.fillPaymentDetailsFromHints();
     await checkoutPage.placeOrder();
   });
 
   await step('Verify the order confirmation page', async () => {
-    await confirmationPage.expectSuccess();
+    await confirmationAssertions.expectSuccess();
   });
 }

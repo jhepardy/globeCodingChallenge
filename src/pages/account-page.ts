@@ -1,20 +1,11 @@
-import { expect, type Page } from '@playwright/test';
+import { type Page } from '@playwright/test';
 import type { Customer } from '../data/customer';
 
 export class AccountPage {
   constructor(private readonly page: Page) {}
 
-  async expectLoginPage(): Promise<void> {
-    // Scope the checks to the main content so footer links do not create selector collisions.
-    await expect(this.page.getByRole('main').getByText(/^my account$/i)).toBeVisible();
-    await expect(this.page.getByRole('button', { name: /sign in/i })).toBeVisible();
-  }
-
   async goToRegistration(): Promise<void> {
     await this.page.getByRole('link', { name: /sign up/i }).click();
-    await expect(this.page).toHaveURL(/\/account\/register$/);
-    // The first name field is a reliable signal that the registration form is ready.
-    await expect(this.page.getByLabel(/first name/i)).toBeVisible();
   }
 
   async register(customer: Customer): Promise<void> {
@@ -26,16 +17,6 @@ export class AccountPage {
     await this.page.getByLabel(/confirm password/i).fill(customer.password);
     await this.page.getByRole('checkbox').check();
     await this.page.getByRole('button', { name: /create account/i }).click();
-  }
-
-  async expectSignedIn(customer: Customer): Promise<void> {
-    await this.page.waitForLoadState('networkidle');
-    await expect(this.page).toHaveURL(/\/account$/);
-    // Assert both profile fields so the test proves the newly created user is active.
-    await expect(
-      this.page.getByText(new RegExp(`${customer.firstName}\\s+${customer.lastName}`, 'i'))
-    ).toBeVisible();
-    await expect(this.page.getByText(customer.email)).toBeVisible();
   }
 
   async signOutIfVisible(): Promise<void> {

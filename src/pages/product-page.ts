@@ -15,12 +15,6 @@ export class ProductPage {
     return this.page.getByRole('button', { name: /increase quantity/i }).locator('xpath=preceding-sibling::span[1]');
   }
 
-  async expectLoaded(productName: string): Promise<void> {
-    // Confirm the product detail page is loaded before capturing values from it.
-    await expect(this.page.getByRole('heading', { name: new RegExp(productName, 'i') })).toBeVisible();
-    await expect(this.page.getByText(/\$\d+\.\d{2}/).first()).toBeVisible();
-  }
-
   async selectColor(colorName: string): Promise<void> {
     // Color swatches expose the chosen variant through the button title.
     const colorButton = this.page.locator(`button[title="${colorName}"]`).first();
@@ -53,10 +47,6 @@ export class ProductPage {
     }
 
     await expect(quantityValue).toHaveText(String(quantity));
-  }
-
-  async expectQuantity(quantity: number): Promise<void> {
-    await expect(this.quantityValue()).toHaveText(String(quantity));
   }
 
   async captureProductDetails(selectedColor?: string, selectedQuantity = 1): Promise<ProductDetails> {

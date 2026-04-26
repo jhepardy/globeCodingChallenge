@@ -86,47 +86,6 @@ export class CheckoutPage {
     }
   }
 
-  async verifyDeliveryOptions(): Promise<void> {
-    await expect(this.page.getByText(/^shipping method$/i)).toBeVisible();
-
-    // Poll the live page because shipping methods are loaded asynchronously after address updates.
-    await expect
-      .poll(
-        async () => {
-          const body = await this.page.locator('body').innerText();
-          const hasUnavailableMessage = /enter your shipping address to view available shipping methods/i.test(body);
-          const pricingMatches = body.match(/\$\d+\.\d{2}|free/gi) ?? [];
-
-          return hasUnavailableMessage ? `unavailable:${pricingMatches.length}` : `available:${pricingMatches.length}`;
-        },
-        {
-          timeout: 15000,
-          message: 'Expected the checkout to surface shipping pricing after the address was entered.'
-        }
-      )
-      .toMatch(/^available:/);
-
-    const shippingOptions = this.shippingOptionLabels();
-    await expect(shippingOptions.first()).toBeVisible({ timeout: 15000 });
-
-    // Verify both that options exist and that every rendered option includes pricing text.
-    const optionCount = await shippingOptions.count();
-    expect(optionCount).toBeGreaterThan(0);
-
-    const optionTexts = (await shippingOptions.allInnerTexts())
-      .map((text) => text.replace(/\s+/g, ' ').trim())
-      .filter(Boolean);
-
-    expect(optionTexts.length).toBeGreaterThan(0);
-
-    for (const optionText of optionTexts) {
-      expect(optionText).toMatch(/\$\d+\.\d{2}|free/i);
-    }
-
-    await expect(shippingOptions.filter({ hasText: /standard/i }).first()).toBeVisible();
-    await expect(shippingOptions.filter({ hasText: /premium/i }).first()).toBeVisible();
-  }
-
   async selectShippingMethod(methodName: 'Standard' | 'Premium'): Promise<void> {
     const shippingMethod = this.shippingMethodRadio(methodName);
     await expect(shippingMethod).toBeVisible({ timeout: 15000 });
@@ -154,10 +113,6 @@ export class CheckoutPage {
 
   async fillPaymentDetailsFromHints(): Promise<void> {
     // The demo explicitly shows the Stripe test card details; use those values in the iframe fields.
-    await expect(this.page.getByText(/test card:\s*4242/i)).toBeVisible({ timeout: 20000 });
-    await expect(this.page.getByText(/loading payment form/i)).not.toBeVisible({ timeout: 30000 });
-    await expect(this.page.locator('iframe[src*="componentName=payment"]').first()).toBeVisible({ timeout: 30000 });
-
     const cardFrame = this.paymentFrame();
     const cardNumber = cardFrame.locator('input[name="number"], #payment-numberInput').first();
     const expiry = cardFrame.locator('input[name="expiry"], input[autocomplete="cc-exp"]').first();

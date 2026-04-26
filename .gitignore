@@ -3,3 +3,6 @@ playwright-report/
 test-results/
 .cache/
 requirement-review.local.md
+"QAE Case Study.pdf"
+"QE code challenge NEW.pdf"
+.gitlab-ci.yml
