@@ -34,27 +34,60 @@ npx playwright install chromium
 npm test
 ```
 
+Intended default:
+
+- `npm test` runs the desktop/web project only
+- mobile and tablet are run explicitly with dedicated scripts
+- `:all` scripts run all configured viewports
+
 ## Common commands
 
 ```bash
-# Run the smoke suite only
-npm run test:smoke
+# Run the default desktop/web suite
+npm test
+npm run test:web
 
-# Run the smoke suite in parallel
+# Run a specific viewport only
+npm run test:mobile #Needs checking whether bug was platform side or automation, @checkout page, email is not filled up, even though run ensures login. Shipping selection doesn't load
+npm run test:tablet
+
+# Run the smoke suite
+npm run test:smoke
+npm run test:smoke:web
+npm run test:smoke:mobile
+npm run test:smoke:tablet
+npm run test:smoke:all
+
+# Run the regression suite
+npm run test:regression
+npm run test:regression:web
+npm run test:regression:mobile
+npm run test:regression:tablet
+npm run test:regression:all
+
+# Run the desktop/web smoke suite in parallel
 npm run test:parallel
 npm run test:parallel:4
 
-# Run a single shipping scenario
-npx playwright test tests/smoke/spree-checkout-standard.spec.ts
-npx playwright test tests/smoke/spree-checkout-premium.spec.ts
+# Run CI-style smoke checks
+npm run test:ci
+npm run test:ci:all
 
-# Run in CI-style headless mode
-CI=1 npm run test:ci
+# Open the HTML report
+npm run report
+
+# Run a single shipping scenario
+npx playwright test tests/smoke/spree-checkout-standard.spec.ts --project=chromium-desktop
+npx playwright test tests/smoke/spree-checkout-standard.spec.ts --project=chromium-mobile-sm
+npx playwright test tests/smoke/spree-checkout-standard.spec.ts --project=chromium-tablet
 ```
 
 ## Notes
 
 - The suite generates a unique customer for every run, with shipping-specific identities such as `QAUser / Standard-<timestamp>` and `QAUser / Premium-<timestamp>`.
 - The test uses stable labels and role-based selectors where possible.
-- The default `npm test` command keeps execution conservative, while `test:parallel` and `test:parallel:4` are available for faster smoke runs.
+- The default `npm test` command is intentionally conservative and runs desktop/web only.
+- Mobile and tablet coverage are opt-in through their dedicated scripts so viewport-specific failures are easier to isolate.
+- `test:smoke:all`, `test:regression:all`, and `test:ci:all` are the explicit multi-viewport entry points.
+- `test:parallel` and `test:parallel:4` are available for faster desktop/web smoke runs.
 - The live Spree demo may occasionally vary by region redirect or client-side routing behavior, so CI keeps retries enabled and stores artifacts for debugging.

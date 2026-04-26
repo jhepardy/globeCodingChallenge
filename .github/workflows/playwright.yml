@@ -41,11 +41,16 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # Keep the default CI gate fast and stable by running desktop/web smoke only.
       - run: npm run test:ci
+      # Uncomment to expand the smoke gate to all configured viewports.
+      # - run: npm run test:ci:all
       # Always upload artifacts so failed live-site runs are debuggable after the job ends.
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: playwright-results
-          path: test-results
+          path: |
+            test-results
+            playwright-report
           retention-days: 7
