@@ -11,9 +11,10 @@ on:
         description: 'Base URL to test, for example a staging or deployed environment'
         required: false
         default: 'https://demo.spreecommerce.org'
-  schedule:
-    - cron: '0 3 * * *'
-
+  # Disabled to avoid automatic daily runs
+  # schedule:
+  #   - cron: '0 3 * * *'
+  
 permissions:
   contents: read
 
